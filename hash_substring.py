@@ -1,41 +1,46 @@
+import numpy as np
+
 def read_input():
-    # Input reading function
     return input().rstrip(), input().rstrip()
 
+def poly_hash(s, p, x):
+    hash_value = 0
+    for i in reversed(s):
+        hash_value = (hash_value * x + ord(i)) % p
+    return hash_value
 
-def print_occurrences(output):
-    # Output printing function
-    print(' '.join(map(str, output)))
+def precompute_hashes(text, len_pattern, p, x):
+    len_text = len(text)
+    H = np.zeros(len_text - len_pattern + 1, dtype=int)
+    S = text[len_text - len_pattern:]
+    H[len_text - len_pattern] = poly_hash(S, p, x)
 
+    y = 1
+    for i in range(len_pattern):
+        y = (y * x) % p
+
+    for i in range(len_text - len_pattern - 1, -1, -1):
+        H[i] = (x * H[i + 1] + ord(text[i]) - y * ord(text[i + len_pattern])) % p
+
+    return H
 
 def get_occurrences(pattern, text):
-    # Rabin-Karp algorithm implementation to find all occurrences of a pattern in a text
-    result = []
-    p = 10**9 + 7  # prime number for hashing
-    x = 263  # base number for hashing
+    p = 10**9 + 7
+    x = np.random.randint(1, p)
 
-    # Hash the pattern and the first window of the text
-    p_hash = 0
-    t_hash = 0
-    x_pow = 1
-    for i in range(len(pattern)):
-        p_hash = (p_hash + ord(pattern[i]) * x_pow) % p
-        t_hash = (t_hash + ord(text[i]) * x_pow) % p
-        x_pow = (x_pow * x) % p
+    p_hash = poly_hash(pattern, p, x)
+    H = precompute_hashes(text, len(pattern), p, x)
 
-    # Compare the hash of the pattern and the hash of the current window in the text
+    occurrences = []
     for i in range(len(text) - len(pattern) + 1):
-        if p_hash == t_hash:
-            if text[i:i+len(pattern)] == pattern:
-                result.append(i)
+        if p_hash != H[i]:
+            continue
+        if text[i:i+len(pattern)] == pattern:
+            occurrences.append(i)
+    return occurrences
 
-        # Calculate the hash of the next window in the text
-        if i < len(text) - len(pattern):
-            t_hash = (x * (t_hash - ord(text[i]) * x_pow) + ord(text[i+len(pattern)])) % p
-            if t_hash < 0:
-                t_hash += p
-    return result
-
+def print_occurrences(output):
+    print(" ".join(map(str, output)))
 
 if __name__ == '__main__':
     print_occurrences(get_occurrences(*read_input()))

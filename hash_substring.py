@@ -1,47 +1,40 @@
-import numpy as np
+import sys
 
+# function to read input from keyboard
 def read_input():
     return input().rstrip(), input().rstrip()
 
-def poly_hash(s, p, x):
-    hash_value = 0
-    for i in reversed(s):
-        hash_value = (hash_value * x + ord(i)) % p
-    return hash_value
+# function to read input from file
+def read_input_from_file():
+    with open("test.txt", "r") as f:
+        return f.readline().rstrip(), f.readline().rstrip()
 
-def precompute_hashes(text, len_pattern, p, x):
-    len_text = len(text)
-    H = np.zeros(len_text - len_pattern + 1, dtype=int)
-    S = text[len_text - len_pattern:]
-    H[len_text - len_pattern] = poly_hash(S, p, x)
-
-    y = 1
-    for i in range(len_pattern):
-        y = (y * x) % p
-
-    for i in range(len_text - len_pattern - 1, -1, -1):
-        H[i] = (x * H[i + 1] + ord(text[i]) - y * ord(text[i + len_pattern])) % p
-
-    return H
-
-def get_occurrences(pattern, text):
+# Rabin Karp's algorithm
+def rabin_karp(pattern, text):
     p = 10**9 + 7
-    x = np.random.randint(1, p)
-
-    p_hash = poly_hash(pattern, p, x)
-    H = precompute_hashes(text, len(pattern), p, x)
-
-    occurrences = []
+    x = 263
+    result = []
+    p_hash = sum(ord(pattern[i]) * pow(x, i, p) for i in range(len(pattern))) % p
+    h = pow(x, len(pattern)-1, p)
+    t_hash = sum(ord(text[i]) * pow(x, i, p) for i in range(len(pattern))) % p
     for i in range(len(text) - len(pattern) + 1):
-        if p_hash != H[i]:
-            continue
-        if text[i:i+len(pattern)] == pattern:
-            occurrences.append(i)
-    return occurrences
+        if p_hash == t_hash:
+            if pattern == text[i:i+len(pattern)]:
+                result.append(i)
+        if i < len(text) - len(pattern):
+            t_hash = (t_hash - ord(text[i]) * h) % p
+            t_hash = (t_hash * x + ord(text[i+len(pattern)])) % p
+            t_hash = (t_hash + p) % p
+    return result
 
-def print_occurrences(output):
-    print(" ".join(map(str, output)))
+# function to print output
+def print_output(result):
+    print(' '.join(map(str, result)))
 
 if __name__ == '__main__':
-    print_occurrences(get_occurrences(*read_input()))
-
+    if sys.argv[1] == 'I':
+        pattern, text = read_input()
+    else:
+        pattern, text = read_input_from_file()
+    result = rabin_karp(pattern, text)
+    print_output(result)

@@ -1,45 +1,53 @@
+# Importē bibliotēkas
 import sys
 
-def read_input():
-    choice = input().strip()
-    if choice == 'I':
-        pattern = input().strip()
-        text = input().strip()
-    elif choice == 'F':
+# Ielasīt lietotāja ievadi
+def ielasit_ievadi():
+    # Izvēles ielasīšana
+    izvele = input().strip()
+    if izvele == 'I':
+        # Ja lietotājs izvēlas ievadīt pašam
+        paraugs = input().strip()
+        teksts = input().strip()
+    elif izvele == 'F':
+        # Ja lietotājs izvēlas ielasīt failu
         with open('./tests/06') as f:
-            pattern = f.readline().strip()
-            text = f.readline().strip()
-    return pattern, text
+            paraugs = f.readline().strip()
+            teksts = f.readline().strip()
+    return paraugs, teksts
 
-def print_occurrences(output):
-    print(' '.join(map(str, output)))
+# Izdrukāt rezultātus
+def izdrukat_rezultatus(rezultati):
+    print(' '.join(map(str, rezultati)))
 
-def hash(s, prime, multiplier):
+# Aprēķināt vērtības
+def hasot(virkne, pirmais, otro):
     h = 0
-    for c in reversed(s):
-        h = (h * multiplier + ord(c)) % prime
+    for burts in reversed(virkne):
+        h = (h * otro + ord(burts)) % pirmais
     return h
 
-def precompute_hashes(T, P, p, x):
-    n, m = len(T), len(P)
-    H = [None] * (n - m + 1)
-    S = T[n - m:]
-    H[n - m] = hash(S, p, x)
+# Aprēķina vērtības pirms datu meklēšanas
+def sagatavot_hasus(teksts, paraugs, pirmais, otro):
+    garums_teksts, garums_paraugs = len(teksts), len(paraugs)
+    hasi = [None] * (garums_teksts - garums_paraugs + 1)
+    sakums = teksts[garums_teksts - garums_paraugs:]
+    hasi[garums_teksts - garums_paraugs] = hasot(sakums, pirmais, otro)
     y = 1
-    for i in range(1, m + 1):
-        y = (y * x) % p
-    for i in range(n - m - 1, -1, -1):
-        H[i] = (x * H[i + 1] + ord(T[i]) - y * ord(T[i + m])) % p
-    return H
+    for i in range(1, garums_paraugs + 1):
+        y = (y * otro) % pirmais
+    for i in range(garums_teksts - garums_paraugs - 1, -1, -1):
+        hasi[i] = (otro * hasi[i + 1] + ord(teksts[i]) - y * ord(teksts[i + garums_paraugs])) % pirmais
+    return hasi
 
-def get_occurrences(pattern, text):
-    prime = 10**9 + 7
-    multiplier = 263
-    p_hash = hash(pattern, prime, multiplier)
-    H = precompute_hashes(text, pattern, prime, multiplier)
-    return [i for i in range(len(text) - len(pattern) + 1) if p_hash == H[i] and text[i:i+len(pattern)] == pattern]
+# Atgriezt meklēšanas rezultātus
+def atrast_sakritibas(paraugs, teksts):
+    pirmais = 10**9 + 7
+    otro = 263
+    parauga_has = hasot(paraugs, pirmais, otro)
+    hasi = sagatavot_hasus(teksts, paraugs, pirmais, otro)
+    sakritibas = [i for i in range(len(teksts) - len(paraugs) + 1) if parauga_has == hasi[i] and teksts[i:i+len(paraugs)] == paraugs]
+    return sakritibas
 
 if __name__ == '__main__':
-    pattern, text = read_input()
-    occurrences = get_occurrences(pattern, text)
-    print_occurrences(occurrences)
+    paraugs, teksts = ielas

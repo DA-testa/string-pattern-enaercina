@@ -1,40 +1,45 @@
 import sys
 
-# function to read input from keyboard
 def read_input():
-    return input().rstrip(), input().rstrip()
+    choice = input().strip()
+    if choice == 'I':
+        pattern = input().strip()
+        text = input().strip()
+    elif choice == 'F':
+        with open('tests/1.in') as f:
+            pattern = f.readline().strip()
+            text = f.readline().strip()
+    return pattern, text
 
-# function to read input from file
-def read_input_from_file():
-    with open("test.txt", "r") as f:
-        return f.readline().rstrip(), f.readline().rstrip()
+def print_occurrences(output):
+    print(' '.join(map(str, output)))
 
-# Rabin Karp's algorithm
-def rabin_karp(pattern, text):
-    p = 10**9 + 7
-    x = 263
-    result = []
-    p_hash = sum(ord(pattern[i]) * pow(x, i, p) for i in range(len(pattern))) % p
-    h = pow(x, len(pattern)-1, p)
-    t_hash = sum(ord(text[i]) * pow(x, i, p) for i in range(len(pattern))) % p
-    for i in range(len(text) - len(pattern) + 1):
-        if p_hash == t_hash:
-            if pattern == text[i:i+len(pattern)]:
-                result.append(i)
-        if i < len(text) - len(pattern):
-            t_hash = (t_hash - ord(text[i]) * h) % p
-            t_hash = (t_hash * x + ord(text[i+len(pattern)])) % p
-            t_hash = (t_hash + p) % p
-    return result
+def hash(s, prime, multiplier):
+    h = 0
+    for c in reversed(s):
+        h = (h * multiplier + ord(c)) % prime
+    return h
 
-# function to print output
-def print_output(result):
-    print(' '.join(map(str, result)))
+def precompute_hashes(T, P, p, x):
+    n, m = len(T), len(P)
+    H = [None] * (n - m + 1)
+    S = T[n - m:]
+    H[n - m] = hash(S, p, x)
+    y = 1
+    for i in range(1, m + 1):
+        y = (y * x) % p
+    for i in range(n - m - 1, -1, -1):
+        H[i] = (x * H[i + 1] + ord(T[i]) - y * ord(T[i + m])) % p
+    return H
+
+def get_occurrences(pattern, text):
+    prime = 10**9 + 7
+    multiplier = 263
+    p_hash = hash(pattern, prime, multiplier)
+    H = precompute_hashes(text, pattern, prime, multiplier)
+    return [i for i in range(len(text) - len(pattern) + 1) if p_hash == H[i] and text[i:i+len(pattern)] == pattern]
 
 if __name__ == '__main__':
-    if sys.argv[1] == 'I':
-        pattern, text = read_input()
-    else:
-        pattern, text = read_input_from_file()
-    result = rabin_karp(pattern, text)
-    print_output(result)
+    pattern, text = read_input()
+    occurrences = get_occurrences(pattern, text)
+    print_occurrences(occurrences)

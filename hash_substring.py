@@ -1,32 +1,45 @@
-# python3
+import sys
 
 def read_input():
-    # this function needs to aquire input both from keyboard and file
-    # as before, use capital i (input from keyboard) and capital f (input from file) to choose which input type will follow
-    
-    
-    # after input type choice
-    # read two lines 
-    # first line is pattern 
-    # second line is text in which to look for pattern 
-    
-    # return both lines in one return
-    
-    # this is the sample return, notice the rstrip function
-    return (input().rstrip(), input().rstrip())
+    choice = input().strip()
+    if choice == 'I':
+        pattern = input().strip()
+        text = input().strip()
+    elif choice == 'F':
+        with open('./tests/06') as f:
+            pattern = f.readline().strip()
+            text = f.readline().strip()
+    return pattern, text
 
 def print_occurrences(output):
-    # this function should control output, it doesn't need any return
     print(' '.join(map(str, output)))
 
+def hash(s, prime, multiplier):
+    h = 0
+    for c in reversed(s):
+        h = (h * multiplier + ord(c)) % prime
+    return h
+
+def precompute_hashes(T, P, p, x):
+    n, m = len(T), len(P)
+    H = [None] * (n - m + 1)
+    S = T[n - m:]
+    H[n - m] = hash(S, p, x)
+    y = 1
+    for i in range(1, m + 1):
+        y = (y * x) % p
+    for i in range(n - m - 1, -1, -1):
+        H[i] = (x * H[i + 1] + ord(T[i]) - y * ord(T[i + m])) % p
+    return H
+
 def get_occurrences(pattern, text):
-    # this function should find the occurances using Rabin Karp alghoritm 
+    prime = 10**9 + 7
+    multiplier = 263
+    p_hash = hash(pattern, prime, multiplier)
+    H = precompute_hashes(text, pattern, prime, multiplier)
+    return [i for i in range(len(text) - len(pattern) + 1) if p_hash == H[i] and text[i:i+len(pattern)] == pattern]
 
-    # and return an iterable variable
-    return [0]
-
-
-# this part launches the functions
 if __name__ == '__main__':
-    print_occurrences(get_occurrences(*read_input()))
-
+    pattern, text = read_input()
+    occurrences = get_occurrences(pattern, text)
+    print_occurrences(occurrences)
